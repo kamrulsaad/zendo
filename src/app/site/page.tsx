@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { pricingCards } from '@/lib/constants'
+import { pricingCards } from "@/lib/constants";
 // import { stripe } from '@/lib/stripe'
 import clsx from "clsx";
 import { Check } from "lucide-react";
@@ -27,7 +27,7 @@ export default async function Home() {
         <p className="text-center">Run your agency, in one place</p>
         <div className="bg-gradient-to-r from-primary to-secondary-foreground text-transparent bg-clip-text relative">
           <h1 className="text-9xl font-bold text-center md:text-[300px]">
-            Plura
+            Zendo
           </h1>
         </div>
         <div className="flex justify-center items-center relative md:mt-[-70px]">
@@ -38,18 +38,65 @@ export default async function Home() {
             width={1200}
             className="rounded-tl-2xl rounded-tr-2xl border-2 border-muted"
           />
-          <div className="bottom-0 top-[50%] bg-gradient-to-t dark:from-background left-0 right-0 absolute z-10"></div>
+          <div className="bottom-0 top-1/2 bg-gradient-to-t dark:from-background left-0 right-0 absolute z-10"></div>
         </div>
       </section>
-      {/* <section className="flex justify-center items-center flex-col gap-4 md:!mt-20 mt-[-60px]">
+      <section className="flex justify-center items-center flex-col gap-4 md:!mt-20 mt-0">
         <h2 className="text-4xl text-center"> Choose what fits you right</h2>
         <p className="text-muted-foreground text-center">
           Our straightforward pricing plans are tailored to meet your needs. If
           {" you're"} not <br />
           ready to commit you can get started for free.
         </p>
-        <div className="flex  justify-center gap-4 flex-wrap mt-6">
-          {prices.data.map((card) => (
+        <div className="flex justify-center gap-4 flex-wrap mt-6">
+          {pricingCards.map((card) => (
+            //! WIP: Wire up free product from stripe
+            <Card
+              key={card.title}
+              className={clsx("w-[300px] flex flex-col justify-between", {
+                "border-2 border-primary": card.title === "Unlimited Saas",
+              })}
+            >
+              <CardHeader>
+                <CardTitle
+                  className={clsx("", {
+                    "text-muted-foreground": card.title !== "Unlimited Saas",
+                  })}
+                >
+                  {card.title}
+                </CardTitle>
+                <CardDescription>{card.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <span className="text-4xl font-bold">{card.price}</span>
+                <span className="text-muted-foreground">
+                  <span>/ {card.duration}</span>
+                </span>
+              </CardContent>
+              <CardFooter className="flex flex-col items-start gap-4">
+                <div>
+                  {card.features.map((feature) => (
+                    <div key={feature} className="flex gap-2">
+                      <Check className="text-muted-foreground" />
+                      <p>{feature}</p>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href={`/agency?plan=${card.priceId}`}
+                  className={clsx(
+                    "w-full text-center bg-primary p-2 rounded-md",
+                    {
+                      "!bg-muted-foreground": card.title !== "Unlimited Saas",
+                    }
+                  )}
+                >
+                  Get Started
+                </Link>
+              </CardFooter>
+            </Card>
+          ))}
+          {/* {prices.data.map((card) => (
             //WIP: Wire up free product from stripe
             <Card
               key={card.nickname}
@@ -108,8 +155,8 @@ export default async function Home() {
                 </Link>
               </CardFooter>
             </Card>
-          ))}
-          <Card className={clsx('w-[300px] flex flex-col justify-between')}>
+          ))} */}
+          {/* <Card className={clsx('w-[300px] flex flex-col justify-between')}>
             <CardHeader>
               <CardTitle
                 className={clsx({
@@ -150,9 +197,9 @@ export default async function Home() {
                 Get Started
               </Link>
             </CardFooter>
-          </Card>
-        </div> */}
-      {/* </section> */}
+          </Card> */}
+        </div>
+      </section>
     </>
   );
 }

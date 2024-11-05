@@ -19,7 +19,7 @@ const Navigation = (props: Props) => {
           height={40}
           alt="zendo logo"
         />
-        <span className="text-xl font-bold">Plura</span>
+        <span className="text-xl font-bold">Zendo</span>
       </aside>
       <nav className="hidden md:block absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <ul className="flex items-center justify-center gap-8">
