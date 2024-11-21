@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { NumberInput } from "@tremor/react";
+import { v4 } from "uuid";
 
 import {
   Card,
@@ -93,7 +94,7 @@ const AgencyDetails = ({ data }: Props) => {
     if (data) {
       form.reset(data);
     }
-  }, [data]);
+  }, [data, form]);
 
   const handleSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {
@@ -122,44 +123,44 @@ const AgencyDetails = ({ data }: Props) => {
           },
         };
 
-        const customerResponse = await fetch("/api/stripe/create-customer", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(bodyData),
-        });
-        const customerData: { customerId: string } =
-          await customerResponse.json();
-        custId = customerData.customerId;
+        // const customerResponse = await fetch("/api/stripe/create-customer", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   body: JSON.stringify(bodyData),
+        // });
+        // const customerData: { customerId: string } =
+        //   await customerResponse.json();
+        // custId = customerData.customerId;
       }
 
       newUserData = await initUser({ role: "AGENCY_OWNER" });
-      if (!data?.customerId && !custId) return;
+      // if (!data?.customerId && !custId) return;
 
-      const response = await upsertAgency({
-        id: data?.id ? data.id : v4(),
-        customerId: data?.customerId || custId || "",
-        address: values.address,
-        agencyLogo: values.agencyLogo,
-        city: values.city,
-        companyPhone: values.companyPhone,
-        country: values.country,
-        name: values.name,
-        state: values.state,
-        whiteLabel: values.whiteLabel,
-        zipCode: values.zipCode,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        companyEmail: values.companyEmail,
-        connectAccountId: "",
-        goal: 5,
-      });
-      toast({
-        title: "Created Agency",
-      });
-      if (data?.id) return router.refresh();
-      if (response) {
+      if (!data?.id) {
+        await upsertAgency({
+          id: data?.id ? data.id : v4(),
+          // customerId: data?.customerId || custId || "",
+          address: values.address,
+          agencyLogo: values.agencyLogo,
+          city: values.city,
+          companyPhone: values.companyPhone,
+          country: values.country,
+          name: values.name,
+          state: values.state,
+          whiteLabel: values.whiteLabel,
+          zipCode: values.zipCode,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          companyEmail: values.companyEmail,
+          connectAccountId: "",
+          goal: 5,
+        });
+        toast({
+          title: "Created Agency",
+        });
+
         return router.refresh();
       }
     } catch (error) {
@@ -381,7 +382,7 @@ const AgencyDetails = ({ data }: Props) => {
                     defaultValue={data?.goal}
                     onValueChange={async (val: number) => {
                       if (!data?.id)
-                        return await updateAgencyDetails(data.id, {
+                        return await updateAgencyDetails(data.id || "", {
                           goal: val,
                         });
                       await saveActivityLogsNotification({
