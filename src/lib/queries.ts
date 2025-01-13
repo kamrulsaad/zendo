@@ -3,9 +3,9 @@
 import { clerkClient, currentUser } from "@clerk/nextjs";
 import { db } from "./db";
 import { redirect } from "next/navigation";
-import { Agency, Plan, Prisma, Role, SubAccount, User } from "@prisma/client";
+import { Agency, Lane, Plan, Prisma, Role, SubAccount, Ticket, User } from "@prisma/client";
 import { v4 } from "uuid";
-import { CreateMediaType } from "./types";
+import { CreateFunnelFormSchema, CreateMediaType } from "./types";
 import { z } from "zod";
 
 export const getAuthUserDetails = async () => {
@@ -595,3 +595,75 @@ export const deletePipeline = async (pipelineId: string) => {
   })
   return response
 }
+
+
+export const updateLanesOrder = async (lanes: Lane[]) => {
+  try {
+    const updateTrans = lanes.map((lane) =>
+      db.lane.update({
+        where: {
+          id: lane.id,
+        },
+        data: {
+          order: lane.order,
+        },
+      })
+    )
+
+    await db.$transaction(updateTrans)
+    console.log('🟢 Done reordered 🟢')
+  } catch (error) {
+    console.log(error, 'ERROR UPDATE LANES ORDER')
+  }
+}
+
+export const updateTicketsOrder = async (tickets: Ticket[]) => {
+  try {
+    const updateTrans = tickets.map((ticket) =>
+      db.ticket.update({
+        where: {
+          id: ticket.id,
+        },
+        data: {
+          order: ticket.order,
+          laneId: ticket.laneId,
+        },
+      })
+    )
+
+    await db.$transaction(updateTrans)
+    console.log('🟢 Done reordered 🟢')
+  } catch (error) {
+    console.log(error, '🔴 ERROR UPDATE TICKET ORDER')
+  }
+}
+
+export const upsertLane = async (lane: Prisma.LaneUncheckedCreateInput) => {
+  let order: number
+
+  if (!lane.order) {
+    const lanes = await db.lane.findMany({
+      where: {
+        pipelineId: lane.pipelineId,
+      },
+    })
+
+    order = lanes.length
+  } else {
+    order = lane.order
+  }
+
+  const response = await db.lane.upsert({
+    where: { id: lane.id || v4() },
+    update: lane,
+    create: { ...lane, order },
+  })
+
+  return response
+}
+
+export const deleteLane = async (laneId: string) => {
+  const resposne = await db.lane.delete({ where: { id: laneId } })
+  return resposne
+}
+
