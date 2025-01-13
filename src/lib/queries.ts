@@ -331,7 +331,7 @@ export const upsertSubAccount = async (subAccount: SubAccount) => {
         },
       },
       Pipeline: {
-        create: { name: "Lead Cycle" },
+        create: { name: "New Pipeline" },
       },
       SidebarOption: {
         create: [

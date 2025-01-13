@@ -1,8 +1,12 @@
-import BlurPage from '@/components/global/blur-page'
-import React from 'react'
+import BlurPage from "@/components/global/blur-page";
+import React from "react";
 
-const PipelinesLayout = ({ children }: { children: React.ReactNode }) => {
-  return <BlurPage>{children}</BlurPage>
-}
+type Props = {
+  children: React.ReactNode;
+};
 
-export default PipelinesLayout
+const PipelinePageLayout = ({ children }: Props) => {
+  return <BlurPage>{children}</BlurPage>;
+};
+
+export default PipelinePageLayout;
