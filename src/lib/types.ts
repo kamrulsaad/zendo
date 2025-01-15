@@ -75,3 +75,7 @@ export const CreateFunnelFormSchema = z.object({
   subDomainName: z.string().optional(),
   favicon: z.string().optional(),
 });
+
+export const LaneFormSchema = z.object({
+  name: z.string().min(1),
+})
