@@ -8,9 +8,17 @@ import {
   Ticket,
   User,
 } from "@prisma/client";
-import { _getTicketsWithAllRelations, getAuthUserDetails, getMedia, getPipelineDetails, getTicketsWithTags, getUserPermissions } from "./queries";
+import {
+  _getTicketsWithAllRelations,
+  getAuthUserDetails,
+  getMedia,
+  getPipelineDetails,
+  getTicketsWithTags,
+  getUserPermissions,
+} from "./queries";
 import { db } from "./db";
 import { z } from "zod";
+import Stripe from "stripe";
 
 export type NotificationWithUser =
   | ({
@@ -78,28 +86,59 @@ export const CreateFunnelFormSchema = z.object({
 
 export type PipelineDetailsWithLanesCardsTagsTickets = Prisma.PromiseReturnType<
   typeof getPipelineDetails
->
+>;
 
 export const LaneFormSchema = z.object({
   name: z.string().min(1),
-})
-export type TicketWithTags = Prisma.PromiseReturnType<typeof getTicketsWithTags>
+});
+export type TicketWithTags = Prisma.PromiseReturnType<
+  typeof getTicketsWithTags
+>;
 
-const currencyNumberRegex = /^\d+(\.\d{1,2})?$/
+const currencyNumberRegex = /^\d+(\.\d{1,2})?$/;
 
 export const TicketFormSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   value: z.string().refine((value) => currencyNumberRegex.test(value), {
-    message: 'Value must be a valid price.',
+    message: "Value must be a valid price.",
   }),
-})
+});
 
 export type TicketDetails = Prisma.PromiseReturnType<
   typeof _getTicketsWithAllRelations
->
+>;
 
 export const ContactUserFormSchema = z.object({
-  name: z.string().min(1, 'Required'),
+  name: z.string().min(1, "Required"),
   email: z.string().email(),
-})
+});
+
+export type Address = {
+  city: string;
+  country: string;
+  line1: string;
+  postal_code: string;
+  state: string;
+};
+
+export type ShippingInfo = {
+  name: string;
+  address: Address;
+};
+
+export type StripeCustomerType = {
+  email: string;
+  name: string;
+  shipping: ShippingInfo;
+  address: Address;
+};
+
+
+export type PricesList = Stripe.ApiList<Stripe.Price>
+
+// export type FunnelsForSubAccount = Prisma.PromiseReturnType<
+//   typeof getFunnels
+// >[0]
+
+// export type UpsertFunnelPage = Prisma.FunnelPageCreateWithoutFunnelInput
