@@ -34,7 +34,6 @@ export async function POST(req: NextRequest) {
     return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 })
   }
 
-  //
   try {
     if (stripeWebhookEvents.has(stripeEvent.type)) {
       const subscription = stripeEvent.data.object as Stripe.Subscription

@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
+import { getStripeOAuthLink } from "@/lib/utils";
 // import { getStripeOAuthLink } from '@/lib/utils'
 import { CheckCircleIcon } from "lucide-react";
 import Image from "next/image";
@@ -40,30 +42,30 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
     agencyDetails.state &&
     agencyDetails.zipCode;
 
-  // const stripeOAuthLink = getStripeOAuthLink(
-  //   'agency',
-  //   `launchpad___${agencyDetails.id}`
-  // )
+  const stripeOAuthLink = getStripeOAuthLink(
+    'agency',
+    `launchpad___${agencyDetails.id}`
+  )
 
   let connectedStripeAccount = false;
 
-  // if (searchParams.code) {
-  //   if (!agencyDetails.connectAccountId) {
-  //     try {
-  //       const response = await stripe.oauth.token({
-  //         grant_type: 'authorization_code',
-  //         code: searchParams.code,
-  //       })
-  //       await db.agency.update({
-  //         where: { id: params.agencyId },
-  //         data: { connectAccountId: response.stripe_user_id },
-  //       })
-  //       connectedStripeAccount = true
-  //     } catch (error) {
-  //       console.log('🔴 Could not connect stripe account')
-  //     }
-  //   }
-  // }
+  if (searchParams.code) {
+    if (!agencyDetails.connectAccountId) {
+      try {
+        const response = await stripe.oauth.token({
+          grant_type: 'authorization_code',
+          code: searchParams.code,
+        })
+        await db.agency.update({
+          where: { id: params.agencyId },
+          data: { connectAccountId: response.stripe_user_id },
+        })
+        connectedStripeAccount = true
+      } catch (error) {
+        console.log('🔴 Could not connect stripe account')
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -111,8 +113,7 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
               ) : (
                 <Link
                   className="bg-primary py-2 px-4 rounded-md text-white"
-                  // href={stripeOAuthLink}
-                  href={"#"}
+                  href={stripeOAuthLink}
                 >
                   Start
                 </Link>
