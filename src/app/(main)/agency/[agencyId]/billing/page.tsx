@@ -19,7 +19,7 @@ type Props = {
   params: { agencyId: string }
 }
 
-const page = async ({ params }: Props) => {
+const BillingPage = async ({ params }: Props) => {
     
   const addOns = await stripe.products.list({
     ids: addOnProducts.map((product) => product.id),
@@ -37,7 +37,7 @@ const page = async ({ params }: Props) => {
   })
 
   const prices = await stripe.prices.list({
-    product: process.env.NEXT_PLURA_PRODUCT_ID,
+    product: process.env.NEXT_ZENDO_PRODUCT_ID,
     active: true,
   })
 
@@ -88,7 +88,7 @@ const page = async ({ params }: Props) => {
               : 'Get Started'
           }
           highlightDescription="Want to modify your plan? You can do this here. If you have
-          further question contact support@plura-app.com"
+          further question contact support@zendo-app.com"
           highlightTitle="Plan Options"
           description={
             agencySubscription?.Subscription?.active === true
@@ -173,4 +173,4 @@ const page = async ({ params }: Props) => {
   )
 }
 
-export default page
+export default BillingPage

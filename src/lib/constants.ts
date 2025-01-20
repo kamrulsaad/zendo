@@ -16,7 +16,6 @@ import Notification from '@/components/icons/notification'
 import Payment from '@/components/icons/payment'
 import Person from '@/components/icons/person'
 import Pipelines from '@/components/icons/pipelines'
-import PluraCategory from '@/components/icons/plura-category'
 import Power from '@/components/icons/power'
 import Receipt from '@/components/icons/receipt'
 import Send from '@/components/icons/send'
@@ -27,10 +26,11 @@ import Tune from '@/components/icons/tune'
 import Video from '@/components/icons/video_recorder'
 import Wallet from '@/components/icons/wallet'
 import Warning from '@/components/icons/warning'
+import ZendoCategory from '@/components/icons/zendo-category'
 export const pricingCards = [
   {
     title: 'Starter',
-    description: 'Perfect for trying out plura',
+    description: 'Perfect for trying out Zendo',
     price: 'Free',
     duration: '',
     highlight: 'Key features',
@@ -58,7 +58,7 @@ export const pricingCards = [
 ]
 
 export const addOnProducts = [
-  { title: 'Priority Support', id: 'prod_PNjJAE2EpP16pn' },
+  { title: 'Priority Support', id: 'prod_RcdekbZDMGglGu' },
 ]
 
 export const icons = [
@@ -200,7 +200,7 @@ export const icons = [
   {
     value: 'category',
     label: 'Category',
-    path: PluraCategory,
+    path: ZendoCategory,
   },
   {
     value: 'clipboardIcon',
