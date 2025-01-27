@@ -9,12 +9,10 @@ import {
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { getStripeOAuthLink } from "@/lib/utils";
-// import { getStripeOAuthLink } from '@/lib/utils'
 import { CheckCircleIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-// import { stripe } from '@/lib/stripe'
 
 type Props = {
   params: {

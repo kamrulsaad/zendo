@@ -50,9 +50,16 @@ export const getConnectAccountProducts = async (stripeAccount: string) => {
   const products = await stripe.products.list(
     {
       limit: 50,
+      active: false,
       expand: ["data.default_price"],
-    }, 
+    },
+    {
+      stripeAccount,
+    }
   );
+
+  // const account = await stripe.accounts.retrieve(stripeAccount);
+  // console.log(account); // Should be "standard", "express", or "custom"
 
   return products.data;
 };
