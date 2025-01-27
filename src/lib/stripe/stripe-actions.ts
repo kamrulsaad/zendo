@@ -18,7 +18,7 @@ export const subscriptionCreated = async (
       },
     });
     if (!agency) {
-      throw new Error("Could not find and agency to upsert the subscription");
+      throw new Error("Could not find and agency to Update the subscription");
     }
 
     const data = {
