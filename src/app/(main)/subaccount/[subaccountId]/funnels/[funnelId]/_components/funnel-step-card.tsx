@@ -13,7 +13,7 @@ type Props = {
 
 const FunnelStepCard = ({ activePage, funnelPage, index }: Props) => {
   let portal = document.getElementById('blur-page')
-
+  
   return (
     <Draggable
       draggableId={funnelPage.id.toString()}

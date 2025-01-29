@@ -58,8 +58,5 @@ export const getConnectAccountProducts = async (stripeAccount: string) => {
     }
   );
 
-  // const account = await stripe.accounts.retrieve(stripeAccount);
-  // console.log(account); // Should be "standard", "express", or "custom"
-
   return products.data;
 };
