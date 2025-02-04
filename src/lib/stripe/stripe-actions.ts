@@ -50,7 +50,7 @@ export const getConnectAccountProducts = async (stripeAccount: string) => {
   const products = await stripe.products.list(
     {
       limit: 50,
-      active: false,
+      active: true,
       expand: ["data.default_price"],
     },
     {
