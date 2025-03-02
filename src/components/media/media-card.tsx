@@ -24,7 +24,7 @@ import {
 import { Copy, MoreHorizontal, Trash } from 'lucide-react'
 import Image from 'next/image'
 import { deleteMedia, saveActivityLogsNotification } from '@/lib/queries'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '../ui/use-toast'
 
 type Props = { file: Media }
 

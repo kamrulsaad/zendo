@@ -29,7 +29,7 @@ import {
 import { Button } from '../ui/button'
 import Loading from '../global/loading'
 import { saveActivityLogsNotification, sendInvitation } from '@/lib/queries'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '../ui/use-toast'
 
 interface SendInvitationProps {
   agencyId: string

@@ -1,8 +1,7 @@
 'use client'
-
 import ContactForm from '@/components/forms/contact-form'
 import { Badge } from '@/components/ui/badge'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '@/components/ui/use-toast'
 import { EditorBtns } from '@/lib/constants'
 import {
   getFunnel,

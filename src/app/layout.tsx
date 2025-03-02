@@ -1,25 +1,30 @@
-import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/providers/theme-provider";
-import ModalProvider from "@/providers/modal-provider";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnarToaster } from "sonner";
+import type { Metadata } from 'next'
+import { DM_Sans } from 'next/font/google'
+import './globals.css'
+import { ClerkProvider } from '@clerk/nextjs'
+import { dark } from '@clerk/themes'
+import { ThemeProvider } from '@/providers/theme-provider'
+import ModalProvider from '@/providers/modal-provider'
+import { Toaster } from '@/components/ui/toaster'
+import { Toaster as SonnarToaster } from '@/components/ui/sonner'
 
-const font = DM_Sans({ subsets: ["latin"] });
+const font = DM_Sans({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Zendo",
-  description: "SaaS Website Builder and Agency Management",
-};
+  title: 'Zendo',
+  description: 'All in one Agency Solution',
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      suppressHydrationWarning
+    >
       <body className={font.className}>
         <ThemeProvider
           attribute="class"
@@ -30,10 +35,10 @@ export default function RootLayout({
           <ModalProvider>
             {children}
             <Toaster />
-            <SonnarToaster position='bottom-left' />
+            <SonnarToaster position="bottom-left" />
           </ModalProvider>
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

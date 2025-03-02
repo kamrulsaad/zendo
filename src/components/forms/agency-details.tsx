@@ -34,7 +34,7 @@ import {
   FormLabel,
   FormMessage,
 } from '../ui/form'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '../ui/use-toast'
 
 import * as z from 'zod'
 import FileUpload from '../global/file-upload'
@@ -93,7 +93,7 @@ const AgencyDetails = ({ data }: Props) => {
     if (data) {
       form.reset(data)
     }
-  }, [data, form])
+  }, [data])
 
   const handleSubmit = async (values: z.infer<typeof FormSchema>) => {
     try {

@@ -1,11 +1,11 @@
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
 }
 
 enum Role {
@@ -396,8 +396,8 @@ model Notification {
 }
 
 enum Plan {
-  price_1QmfDrB2czDh9hIhou9cmLsH
-  price_1QmfDrB2czDh9hIh68ZTjI8s
+  price_1OYxkqFj9oKEERu1NbKUxXxN
+  price_1OYxkqFj9oKEERu1KfJGWxgN
 }
 
 model Subscription {

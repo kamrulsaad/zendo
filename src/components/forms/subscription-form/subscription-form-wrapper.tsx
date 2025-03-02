@@ -1,7 +1,6 @@
 'use client'
-
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '@/components/ui/use-toast'
 import { pricingCards } from '@/lib/constants'
 import { useModal } from '@/providers/modal-provider'
 import { Plan } from '@prisma/client'
@@ -71,7 +70,7 @@ const SubscriptionFormWrapper = ({ customerId, planExists }: Props) => {
       }
     }
     createSecret()
-  }, [data, selectedPriceId, customerId, planExists, setClose, router])
+  }, [data, selectedPriceId, customerId])
 
   return (
     <div className="border-none transition-all">

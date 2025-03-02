@@ -1,5 +1,6 @@
 'use client'
 import React from 'react'
+import PipelineInfobar from './pipeline-infobar'
 import { Pipeline } from '@prisma/client'
 import CreatePipelineForm from '@/components/forms/create-pipeline-form'
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { deletePipeline } from '@/lib/queries'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
 
 const PipelineSettings = ({
@@ -28,7 +29,6 @@ const PipelineSettings = ({
   pipelines: Pipeline[]
 }) => {
   const router = useRouter()
-
   return (
     <AlertDialog>
       <div>
@@ -50,6 +50,7 @@ const PipelineSettings = ({
                 onClick={async () => {
                   try {
                     await deletePipeline(pipelineId)
+                    //Challenge: Activity log
                     toast({
                       title: 'Deleted',
                       description: 'Pipeline is deleted',

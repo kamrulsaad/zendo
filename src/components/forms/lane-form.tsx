@@ -1,10 +1,10 @@
 'use client'
-
 import React, { useEffect } from 'react'
 import { z } from 'zod'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,10 +14,11 @@ import {
   Card,
   CardHeader,
   CardTitle,
+  CardDescription,
   CardContent,
 } from '@/components/ui/card'
 import { useForm } from 'react-hook-form'
-import { Lane, } from '@prisma/client'
+import { Funnel, Lane, Pipeline } from '@prisma/client'
 import { Input } from '../ui/input'
 
 import { Button } from '../ui/button'
@@ -26,10 +27,12 @@ import { LaneFormSchema } from '@/lib/types'
 import {
   getPipelineDetails,
   saveActivityLogsNotification,
+  upsertFunnel,
   upsertLane,
+  upsertPipeline,
 } from '@/lib/queries'
 import { v4 } from 'uuid'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '../ui/use-toast'
 import { useModal } from '@/providers/modal-provider'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -59,7 +62,7 @@ const LaneForm: React.FC<CreateLaneFormProps> = ({
         name: defaultData.name || '',
       })
     }
-  }, [defaultData, form])
+  }, [defaultData])
 
   const isLoading = form.formState.isLoading
 

@@ -1,5 +1,4 @@
 'use client'
-
 import { EditorBtns } from '@/lib/constants'
 import { EditorAction } from './editor-actions'
 import { Dispatch, createContext, useContext, useReducer } from 'react'
@@ -194,7 +193,7 @@ const editorReducer = (
       return updatedEditor
 
     case 'DELETE_ELEMENT':
-      // Perform logic to delete the element from the state
+      // Perform your logic to delete the element from the state
       const updatedElementsAfterDelete = deleteAnElement(
         state.editor.elements,
         action

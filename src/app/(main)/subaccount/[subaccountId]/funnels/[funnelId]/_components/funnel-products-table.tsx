@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useState } from 'react'
 import {
   Table,
@@ -75,7 +74,6 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
           },
         ])
   }
-  
   return (
     <>
       <Table className="bg-card border-[1px] border-border rounded-md">

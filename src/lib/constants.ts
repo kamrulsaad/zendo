@@ -44,7 +44,7 @@ export const pricingCards = [
     duration: 'month',
     highlight: 'Key features',
     features: ['Rebilling', '24/7 Support team'],
-    priceId: 'price_1QmfDrB2czDh9hIh68ZTjI8s',
+    priceId: 'price_1OYxkqFj9oKEERu1KfJGWxgN',
   },
   {
     title: 'Basic',
@@ -53,13 +53,12 @@ export const pricingCards = [
     duration: 'month',
     highlight: 'Everything in Starter, plus',
     features: ['Unlimited Sub accounts', 'Unlimited Team members'],
-    priceId: 'price_1QmfDrB2czDh9hIhou9cmLsH',
+    priceId: 'price_1OYxkqFj9oKEERu1NbKUxXxN',
   },
 ]
 
-//! Need to Change the Product ID
 export const addOnProducts = [
-  { title: 'Priority Support', id: 'prod_Rg2O9IN7c2Z1if' },
+  { title: 'Priority Support', id: 'prod_PNjJAE2EpP16pn' },
 ]
 
 export const icons = [
@@ -201,7 +200,7 @@ export const icons = [
   {
     value: 'category',
     label: 'Category',
-    path: ZendoCategory,
+    path: ZendoCategory
   },
   {
     value: 'clipboardIcon',

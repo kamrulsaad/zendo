@@ -1,5 +1,4 @@
 'use client'
-
 import React, { useEffect } from 'react'
 import { z } from 'zod'
 import {
@@ -23,7 +22,7 @@ import { Input } from '../ui/input'
 
 import { Button } from '../ui/button'
 import Loading from '../global/loading'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '../ui/use-toast'
 import { FunnelPage } from '@prisma/client'
 import { FunnelPageSchema } from '@/lib/types'
 import {
@@ -65,7 +64,7 @@ const CreateFunnelPage: React.FC<CreateFunnelPageProps> = ({
     if (defaultData) {
       form.reset({ name: defaultData.name, pathName: defaultData.pathName })
     }
-  }, [defaultData, form])
+  }, [defaultData])
 
   const onSubmit = async (values: z.infer<typeof FunnelPageSchema>) => {
     if (order !== 0 && !values.pathName)

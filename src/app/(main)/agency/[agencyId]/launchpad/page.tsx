@@ -1,32 +1,32 @@
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { db } from "@/lib/db";
-import { stripe } from "@/lib/stripe";
-import { getStripeOAuthLink } from "@/lib/utils";
-import { CheckCircleIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import React from "react";
+} from '@/components/ui/card'
+import { db } from '@/lib/db'
+import { getStripeOAuthLink } from '@/lib/utils'
+import { CheckCircleIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import React from 'react'
+import { stripe } from '@/lib/stripe'
 
 type Props = {
   params: {
-    agencyId: string;
-  };
-  searchParams: { code: string };
-};
+    agencyId: string
+  }
+  searchParams: { code: string }
+}
 
 const LaunchPadPage = async ({ params, searchParams }: Props) => {
   const agencyDetails = await db.agency.findUnique({
     where: { id: params.agencyId },
-  });
+  })
 
-  if (!agencyDetails) return;
+  if (!agencyDetails) return
 
   const allDetailsExist =
     agencyDetails.address &&
@@ -38,14 +38,14 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
     agencyDetails.country &&
     agencyDetails.name &&
     agencyDetails.state &&
-    agencyDetails.zipCode;
+    agencyDetails.zipCode
 
   const stripeOAuthLink = getStripeOAuthLink(
     'agency',
     `launchpad___${agencyDetails.id}`
   )
 
-  let connectedStripeAccount = false;
+  let connectedStripeAccount = false
 
   if (searchParams.code) {
     if (!agencyDetails.connectAccountId) {
@@ -146,7 +146,7 @@ const LaunchPadPage = async ({ params, searchParams }: Props) => {
         </Card>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LaunchPadPage;
+export default LaunchPadPage

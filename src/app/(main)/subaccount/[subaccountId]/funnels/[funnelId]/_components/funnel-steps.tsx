@@ -1,11 +1,10 @@
 'use client'
-
 import CreateFunnelPage from '@/components/forms/funnel-page'
 import CustomModal from '@/components/global/custom-modal'
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '@/components/ui/use-toast'
 import { upsertFunnelPage } from '@/lib/queries'
 import { FunnelsForSubAccount } from '@/lib/types'
 import { useModal } from '@/providers/modal-provider'
@@ -44,6 +43,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
   const { setOpen } = useModal()
   const [pagesState, setPagesState] = useState(pages)
   const onDragStart = (event: DragStart) => {
+    //current chosen page
     const { draggableId } = event
     const value = pagesState.find((page) => page.id === draggableId)
   }
@@ -51,6 +51,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
   const onDragEnd = (dropResult: DropResult) => {
     const { destination, source } = dropResult
 
+    //no destination or same position
     if (
       !destination ||
       (destination.droppableId === source.droppableId &&

@@ -1,5 +1,4 @@
 'use client'
-
 import { Badge } from '@/components/ui/badge'
 import { FunnelsForSubAccount } from '@/lib/types'
 import { ColumnDef } from '@tanstack/react-table'

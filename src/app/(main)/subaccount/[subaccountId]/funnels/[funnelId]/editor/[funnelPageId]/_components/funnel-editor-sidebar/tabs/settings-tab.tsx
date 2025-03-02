@@ -1,6 +1,5 @@
 'use client'
-
-import React from 'react'
+import React, { ChangeEventHandler } from 'react'
 import {
   Accordion,
   AccordionContent,
@@ -37,7 +36,9 @@ import {
 import { useEditor } from '@/providers/editor/editor-provider'
 import { Slider } from '@/components/ui/slider'
 
-const SettingsTab = () => {
+type Props = {}
+
+const SettingsTab = (props: Props) => {
   const { state, dispatch } = useEditor()
 
   const handleOnChanges = (e: any) => {

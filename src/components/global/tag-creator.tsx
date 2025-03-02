@@ -1,5 +1,4 @@
 'use client'
-
 import { Tag } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
@@ -16,7 +15,7 @@ import {
 } from '../ui/alert-dialog'
 import TagComponent from './tag'
 import { PlusCircleIcon, TrashIcon, X } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '../ui/use-toast'
 import { v4 } from 'uuid'
 import {
   deleteTag,
@@ -53,7 +52,7 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
 
   useEffect(() => {
     getSelectedTags(selectedTags)
-  }, [selectedTags, getSelectedTags])
+  }, [selectedTags])
 
   useEffect(() => {
     if (subAccountId) {
@@ -77,7 +76,6 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
       })
       return
     }
-
     if (!selectedColor) {
       toast({
         variant: 'destructive',
@@ -85,7 +83,6 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
       })
       return
     }
-
     const tagData: Tag = {
       color: selectedColor,
       createdAt: new Date(),
@@ -122,7 +119,6 @@ const TagCreator = ({ getSelectedTags, subAccountId, defaultTags }: Props) => {
       setSelectedTags([...selectedTags, tag])
     }
   }
-
   const handleDeleteTag = async (tagId: string) => {
     setTags(tags.filter((tag) => tag.id !== tagId))
     try {

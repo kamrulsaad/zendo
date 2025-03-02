@@ -24,7 +24,7 @@ import { Button } from '../ui/button'
 import Loading from '../global/loading'
 import { ContactUserFormSchema } from '@/lib/types'
 import { saveActivityLogsNotification, upsertContact } from '@/lib/queries'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '../ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useModal } from '@/providers/modal-provider'
 
@@ -48,7 +48,7 @@ const ContactUserForm: React.FC<ContactUserFormProps> = ({ subaccountId }) => {
     if (data.contact) {
       form.reset(data.contact)
     }
-  }, [data, form])
+  }, [data, form.reset])
 
   const isLoading = form.formState.isLoading
 
@@ -68,7 +68,7 @@ const ContactUserForm: React.FC<ContactUserFormProps> = ({ subaccountId }) => {
       })
       toast({
         title: 'Success',
-        description: 'Saved Contact details',
+        description: 'Saved funnel details',
       })
       setClose()
       router.refresh()
@@ -76,7 +76,7 @@ const ContactUserForm: React.FC<ContactUserFormProps> = ({ subaccountId }) => {
       toast({
         variant: 'destructive',
         title: 'Oppse!',
-        description: 'Could not save Contact details',
+        description: 'Could not save funnel details',
       })
     }
   }

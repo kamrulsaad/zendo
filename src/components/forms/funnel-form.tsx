@@ -1,10 +1,10 @@
 'use client'
-
 import React, { useEffect } from 'react'
 import { z } from 'zod'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -21,7 +21,7 @@ import Loading from '../global/loading'
 import { CreateFunnelFormSchema } from '@/lib/types'
 import { saveActivityLogsNotification, upsertFunnel } from '@/lib/queries'
 import { v4 } from 'uuid'
-import { toast } from '@/hooks/use-toast'
+import { toast } from '../ui/use-toast'
 import { useModal } from '@/providers/modal-provider'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -31,6 +31,8 @@ interface CreateFunnelProps {
   defaultData?: Funnel
   subAccountId: string
 }
+
+//CHALLENGE: Use favicons
 
 const FunnelForm: React.FC<CreateFunnelProps> = ({
   defaultData,
@@ -58,7 +60,7 @@ const FunnelForm: React.FC<CreateFunnelProps> = ({
         subDomainName: defaultData.subDomainName || '',
       })
     }
-  }, [defaultData, form])
+  }, [defaultData])
 
   const isLoading = form.formState.isLoading
 

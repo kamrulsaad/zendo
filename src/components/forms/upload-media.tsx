@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 import { z } from 'zod'
-import { useToast } from '@/hooks/use-toast'
+import { useToast } from '../ui/use-toast'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -86,7 +86,7 @@ const UploadMediaForm = ({ subaccountId }: Props) => {
                   <FormLabel>File Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter file name"
+                      placeholder="Your agency name"
                       {...field}
                     />
                   </FormControl>
