@@ -1,4 +1,6 @@
-# Zendo - SaaS Website Builder, Project Management And Dashboard With Stripe using Nextjs14, Bun, Stripe Connect, Prisma, MySQL, Tailwind
+# Zendo
+
+##  SaaS Website Builder, Project Management And Dashboard With Stripe using Nextjs14, Bun, Stripe Connect, Prisma, MySQL, Tailwind
 
 ### Features in this application.
 - 🤯 Multivendor B2B2B Saas
