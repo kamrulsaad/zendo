@@ -26,9 +26,5 @@
 - ☀️ Light & Dark mode
 - 📄 Functioning landing page
 
-
 <!-- Project main part completed  -->
 <!-- With a few small bugs need to be fixed -->
-<!-- Landing Page testimonials scrolling issue fixed -->
-
-
