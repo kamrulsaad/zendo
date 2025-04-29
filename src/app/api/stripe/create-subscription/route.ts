@@ -1,76 +1,86 @@
-import { db } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
-import { NextResponse } from 'next/server'
+import { db } from "@/lib/db";
+import { stripe } from "@/lib/stripe";
+import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/utils";
 
-export async function POST(req: Request) {
-  const { customerId, priceId } = await req.json()
-  if (!customerId || !priceId)
-    return new NextResponse('Customer Id or price id is missing', {
+export async function POST(req: NextRequest) {
+  const { priceId, customerId } = await req.json();
+
+  if (!customerId || !priceId) {
+    return NextResponse.json("Customer ID or Price ID not found", {
       status: 400,
-    })
+    });
+  }
 
-  const subscriptionExists = await db.agency.findFirst({
-    where: { customerId },
-    include: { Subscription: true },
-  })
+  const subscriptionExist = await db.agency.findFirst({
+    where: {
+      customerId,
+    },
+    include: {
+      subscriptions: true,
+    },
+  });
 
   try {
     if (
-      subscriptionExists?.Subscription?.subscritiptionId &&
-      subscriptionExists.Subscription.active
+      subscriptionExist?.subscriptions?.subscritiptionId &&
+      subscriptionExist.subscriptions.active
     ) {
-      //update the subscription instead of creating one.
-      if (!subscriptionExists.Subscription.subscritiptionId) {
-        throw new Error(
-          'Could not find the subscription Id to update the subscription.'
-        )
-      }
-      console.log('Updating the subscription')
+      // Update subscription
+      // get current subscription
       const currentSubscriptionDetails = await stripe.subscriptions.retrieve(
-        subscriptionExists.Subscription.subscritiptionId
-      )
+        subscriptionExist.subscriptions.subscritiptionId,
+      );
 
-      const subscription = await stripe.subscriptions.update(
-        subscriptionExists.Subscription.subscritiptionId,
+      const subsription = await stripe.subscriptions.update(
+        subscriptionExist.subscriptions.subscritiptionId,
         {
           items: [
             {
               id: currentSubscriptionDetails.items.data[0].id,
               deleted: true,
             },
-            { price: priceId },
+            {
+              price: priceId,
+            },
           ],
-          expand: ['latest_invoice.payment_intent'],
-        }
-      )
+          expand: ["latest_invoice.payment_intent"],
+        },
+      );
+
       return NextResponse.json({
-        subscriptionId: subscription.id,
-        //@ts-ignore
-        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-      })
+        subscriptionId: subsription.id,
+        // @ts-expect-error Stripe TS don't recognize payment_intent because we set it ast string in expand property
+        clientSecret: subsription.latest_invoice?.payment_intent.client_secret,
+      });
     } else {
-      console.log('Createing a sub')
+      // Create subscription
+      console.log("Creating subscription...");
+
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
-        items: [
-          {
-            price: priceId,
-          },
-        ],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
-      })
+        items: [{ price: priceId }],
+        // Use default_incomplete to create Subscriptions with status=incomplete when the first invoice requires payment,
+        // otherwise start as active.
+        // Link: https://docs.stripe.com/api/subscriptions/create#create_subscription-payment_behavior
+        payment_behavior: "default_incomplete",
+        // Stripe sets subscription.default_payment_method when a subscription payment succeeds.
+        // Link: https://docs.stripe.com/api/subscriptions/create#create_subscription-payment_settings-save_default_payment_method
+        payment_settings: { save_default_payment_method: "on_subscription" },
+        expand: ["latest_invoice.payment_intent"],
+      });
+
       return NextResponse.json({
         subscriptionId: subscription.id,
-        //@ts-ignore
-        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-      })
+        // @ts-expect-error Stripe TS don't recognize payment_intent because we set it ast string in expand property
+        clientSecret: subscription.latest_invoice?.payment_intent.client_secret,
+      });
     }
   } catch (error) {
-    console.log('🔴 Error', error)
-    return new NextResponse('Internal Server Error', {
+    logger(error);
+
+    return NextResponse.json("Internal server error", {
       status: 500,
-    })
+    });
   }
 }

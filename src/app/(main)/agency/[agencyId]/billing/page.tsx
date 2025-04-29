@@ -1,9 +1,13 @@
-import React from 'react'
-import { stripe } from '@/lib/stripe'
-import { addOnProducts, pricingCards } from '@/lib/constants'
-import { db } from '@/lib/db'
-import { Separator } from '@/components/ui/separator'
-import PricingCard from './_components/pricing-card'
+import React from "react";
+import { redirect } from "next/navigation";
+
+import {
+  getAddOnsProducts,
+  getCharges,
+  getPrices,
+} from "@/lib/stripe/stripe-actions";
+import { getAgencySubscription } from "@/queries/agency";
+
 import {
   Table,
   TableBody,
@@ -11,166 +15,185 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import clsx from 'clsx'
-import SubscriptionHelper from './_components/subscription-helper'
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import PricingCard from "@/components/modules/billing/PricingCard";
 
-type Props = {
-  params: { agencyId: string }
+import { PRICING } from "@/config/pricing";
+import { cn, constructMetadata, formatPrice } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { ADD_ONS } from "@/config/add-ons";
+
+interface AgencyBillingPageProps {
+  params: {
+    agencyId: string | undefined;
+  };
 }
 
-const page = async ({ params }: Props) => {
-  //CHALLENGE : Create the add on  products
-  const addOns = await stripe.products.list({
-    ids: addOnProducts.map((product) => product.id),
-    expand: ['data.default_price'],
-  })
+const AgencyBillingPage: React.FC<AgencyBillingPageProps> = async ({
+  params,
+}) => {
+  const { agencyId } = params;
 
-  const agencySubscription = await db.agency.findUnique({
-    where: {
-      id: params.agencyId,
-    },
-    select: {
-      customerId: true,
-      Subscription: true,
-    },
-  })
+  if (!agencyId) redirect("/agency/unauthorized");
 
-  const prices = await stripe.prices.list({
-    product: process.env.NEXT_ZENDO_PRODUCT_ID,
-    active: true,
-  })
+  // WIP: Create more add-ons products
+  const addOns = await getAddOnsProducts();
+  const agencySubscription = await getAgencySubscription(agencyId);
 
-  const currentPlanDetails = pricingCards.find(
-    (c) => c.priceId === agencySubscription?.Subscription?.priceId
-  )
+  const prices = await getPrices();
+  const currentPlanDetails = PRICING.find(
+    (price) => price.priceId === agencySubscription?.subscriptions?.priceId
+  );
 
-  const charges = await stripe.charges.list({
-    limit: 50,
-    customer: agencySubscription?.customerId,
-  })
-
+  const charges = await getCharges(agencySubscription?.customerId);
   const allCharges = [
     ...charges.data.map((charge) => ({
-      description: charge.description,
       id: charge.id,
-      date: `${new Date(charge.created * 1000).toLocaleTimeString()} ${new Date(
-        charge.created * 1000
-      ).toLocaleDateString()}`,
-      status: 'Paid',
+      description: charge.description,
+      date: `${new Date(charge.created * 1000).toLocaleTimeString()} ${new Date(charge.created * 1000).toLocaleDateString()}`,
+      status: "Paid",
       amount: `$${charge.amount / 100}`,
     })),
-  ]
+  ];
+
+  const amt =
+    agencySubscription?.subscriptions?.active && currentPlanDetails?.price
+      ? currentPlanDetails?.price
+      : "$0";
+
+  const buttonCta = agencySubscription?.subscriptions?.active
+    ? "Change Plan"
+    : "Get Started";
+
+  const description =
+    agencySubscription?.subscriptions?.active && currentPlanDetails?.description
+      ? currentPlanDetails?.description
+      : "Lets get started! Pick a plan that works best for you!";
+
+  const title =
+    agencySubscription?.subscriptions?.active === true &&
+    currentPlanDetails?.title
+      ? currentPlanDetails?.title
+      : "Starter";
+
+  const starterFeatures =
+    PRICING.find((feature) => feature.title === "Starter")?.features || [];
+
+  const features =
+    agencySubscription?.subscriptions?.active && currentPlanDetails?.features
+      ? currentPlanDetails.features
+      : starterFeatures;
 
   return (
     <>
-      <SubscriptionHelper
-        prices={prices.data}
-        customerId={agencySubscription?.customerId || ''}
-        planExists={agencySubscription?.Subscription?.active === true}
-      />
-      <h1 className="text-4xl p-4">Billing</h1>
-      <Separator className=" mb-6" />
-      <h2 className="text-2xl p-4">Current Plan</h2>
-      <div className="flex flex-col lg:!flex-row justify-between gap-8">
+      <h1 className="text-3xl font-bold mb-4">Billing</h1>
+      <Separator className="mb-6" />
+      <h2 className="text-2xl mb-4">Current Plan</h2>
+      <div className="flex flex-col lg:!flex-row justify-between gap-8 mb-4">
         <PricingCard
-          planExists={agencySubscription?.Subscription?.active === true}
+          isPlanExists={Boolean(agencySubscription?.subscriptions?.active)}
           prices={prices.data}
-          customerId={agencySubscription?.customerId || ''}
-          amt={
-            agencySubscription?.Subscription?.active === true
-              ? currentPlanDetails?.price || '$0'
-              : '$0'
-          }
-          buttonCta={
-            agencySubscription?.Subscription?.active === true
-              ? 'Change Plan'
-              : 'Get Started'
-          }
-          highlightDescription="Want to modify your plan? You can do this here. If you have
-          further question contact support@zendo-app.com"
+          customerId={agencySubscription?.customerId || ""}
+          amt={amt}
+          buttonCta={buttonCta}
+          description={description}
+          title={title}
           highlightTitle="Plan Options"
-          description={
-            agencySubscription?.Subscription?.active === true
-              ? currentPlanDetails?.description || 'Lets get started'
-              : 'Lets get started! Pick a plan that works best for you.'
-          }
+          highlightDescription="Want to modify your plan? You can do this here. If you have further question please, contact support@zendo.com"
           duration="/ month"
-          features={
-            agencySubscription?.Subscription?.active === true
-              ? currentPlanDetails?.features || []
-              : currentPlanDetails?.features ||
-                pricingCards.find((pricing) => pricing.title === 'Starter')
-                  ?.features ||
-                []
-          }
-          title={
-            agencySubscription?.Subscription?.active === true
-              ? currentPlanDetails?.title || 'Starter'
-              : 'Starter'
-          }
+          features={features}
         />
-        {addOns.data.map((addOn) => (
-          <PricingCard
-            planExists={agencySubscription?.Subscription?.active === true}
-            prices={prices.data}
-            customerId={agencySubscription?.customerId || ''}
-            key={addOn.id}
-            amt={
-              //@ts-ignore
-              addOn.default_price?.unit_amount
-                ? //@ts-ignore
-                  `$${addOn.default_price.unit_amount / 100}`
-                : '$0'
-            }
-            buttonCta="Subscribe"
-            description="Dedicated support line & teams channel for support"
-            duration="/ month"
-            features={[]}
-            title={'24/7 priority support'}
-            highlightTitle="Get support now!"
-            highlightDescription="Get priority support and skip the long long with the click of a button."
-          />
-        ))}
+        {addOns.data.map((addOn) => {
+          const features =
+            ADD_ONS.find((prod) => prod.id === addOn.id)?.features || [];
+
+          return (
+            <PricingCard
+              key={addOn.id}
+              isPlanExists={Boolean(agencySubscription?.subscriptions?.active)}
+              prices={prices.data}
+              customerId={agencySubscription?.customerId || ""}
+              amt={
+                // @ts-expect-error
+                addOn.default_price?.unit_amount
+                  ? // @ts-expect-error
+                    formatPrice(addOn.default_price?.unit_amount / 100, {
+                      maximumFractionDigits: 0,
+                    })
+                  : "$0"
+              }
+              buttonCta="Subscribe"
+              description={addOn.description as string}
+              title={addOn.name}
+              highlightTitle={"Add-Ons"}
+              highlightDescription={
+                "Add-Ons are additional features that you can add to your plan. If you have further question please, contact support@zendo.com"
+              }
+              duration={"/ month"}
+              features={features}
+            />
+          );
+        })}
       </div>
-      <h2 className="text-2xl p-4">Payment History</h2>
-      <Table className="bg-card border-[1px] border-border rounded-md">
-        <TableHeader className="rounded-md">
+      <h2 className="text-2xl mb-4">Payment History</h2>
+      <Table className="bg-card rounded-md">
+        <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Description</TableHead>
-            <TableHead className="w-[200px]">Invoice Id</TableHead>
-            <TableHead className="w-[300px]">Date</TableHead>
-            <TableHead className="w-[200px]">Paid</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Paid</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Invoice ID</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="font-medium truncate">
-          {allCharges.map((charge) => (
-            <TableRow key={charge.id}>
-              <TableCell>{charge.description}</TableCell>
-              <TableCell className="text-muted-foreground">
-                {charge.id}
+        <TableBody>
+          {!!allCharges.length &&
+            allCharges.map((charge) => (
+              <TableRow key={charge.id}>
+                <TableCell>{charge.description}</TableCell>
+                <TableCell>
+                  {format(new Date(charge.date), "dd/MM/yyyy hh:mm a")}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    className={cn({
+                      "bg-emerald-500 text-white":
+                        charge.status.toLowerCase() === "paid",
+                      "bg-orange-600 text-white":
+                        charge.status.toLowerCase() === "pending",
+                      "bg-destructive text-white":
+                        charge.status.toLowerCase() === "failed",
+                    })}
+                  >
+                    {charge.status.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                <TableCell>{charge.amount + ".00"}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {charge.id}
+                </TableCell>
+              </TableRow>
+            ))}
+          {!allCharges.length && (
+            <TableRow>
+              <TableCell
+                colSpan={5}
+                className="text-center py-14 text-muted-foreground"
+              >
+                No charges found.
               </TableCell>
-              <TableCell>{charge.date}</TableCell>
-              <TableCell>
-                <p
-                  className={clsx('', {
-                    'text-emerald-500': charge.status.toLowerCase() === 'paid',
-                    'text-orange-600':
-                      charge.status.toLowerCase() === 'pending',
-                    'text-red-600': charge.status.toLowerCase() === 'failed',
-                  })}
-                >
-                  {charge.status.toUpperCase()}
-                </p>
-              </TableCell>
-              <TableCell className="text-right">{charge.amount}</TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </>
-  )
-}
+  );
+};
 
-export default page
+export default AgencyBillingPage;
+
+export const metadata = constructMetadata({
+  title: "Billing - Zendo",
+});

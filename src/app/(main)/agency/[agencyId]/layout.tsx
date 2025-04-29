@@ -1,61 +1,55 @@
-import BlurPage from '@/components/global/blur-page'
-import InfoBar from '@/components/global/infobar'
-import Sidebar from '@/components/sidebar'
-import Unauthorized from '@/components/unauthorized'
-import {
-  getNotificationAndUser,
-  verifyAndAcceptInvitation,
-} from '@/lib/queries'
-import { currentUser } from '@clerk/nextjs'
-import { redirect } from 'next/navigation'
-import React from 'react'
+import React from "react";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs";
+import { Role } from "@prisma/client";
 
-type Props = {
-  children: React.ReactNode
-  params: { agencyId: string }
+import { verifyInvintation } from "@/queries/invintations";
+import { getNotification } from "@/queries/notifications";
+
+import Sidebar from "@/components/navigation/Sidebar";
+import BlurPage from "@/components/common/BlurPage";
+import InfoBar from "@/components/common/InfoBar";
+
+interface AgencyIdLayoutProps extends React.PropsWithChildren {
+  params: {
+    agencyId: string | undefined;
+  };
 }
 
-const layout = async ({ children, params }: Props) => {
-  const agencyId = await verifyAndAcceptInvitation()
-  const user = await currentUser()
+const AgencyIdLayout: React.FC<AgencyIdLayoutProps> = async ({
+  params,
+  children,
+}) => {
+  const user = await currentUser();
+  const agencyId = await verifyInvintation();
 
-  if (!user) {
-    return redirect('/')
-  }
-
-  if (!agencyId) {
-    return redirect('/agency')
-  }
+  if (!user) redirect("/");
+  if (!agencyId || !params.agencyId) redirect("/agency");
 
   if (
-    user.privateMetadata.role !== 'AGENCY_OWNER' &&
-    user.privateMetadata.role !== 'AGENCY_ADMIN'
-  )
-    return <Unauthorized />
+    user.privateMetadata.role !== Role.AGENCY_OWNER &&
+    user.privateMetadata.role !== Role.AGENCY_ADMIN
+  ) {
+    redirect("/agency/unauthorized");
+  }
 
-  let allNoti: any = []
-  const notifications = await getNotificationAndUser(agencyId)
-  if (notifications) allNoti = notifications
-
- 
+  const notifications = await getNotification(agencyId);
 
   return (
     <div className="h-screen overflow-hidden">
-      <Sidebar
-        id={params.agencyId}
-        type="agency"
-      />
+      <Sidebar id={params.agencyId} type="agency" />
       <div className="md:pl-[300px]">
         <InfoBar
-          notifications={allNoti}
-          role={allNoti.User?.role}
+          notifications={notifications}
+          subAccountId={user.id}
+          role={user.privateMetadata.role}
         />
         <div className="relative">
           <BlurPage>{children}</BlurPage>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default layout
+export default AgencyIdLayout;

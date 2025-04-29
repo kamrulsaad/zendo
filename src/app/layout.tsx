@@ -1,44 +1,50 @@
-import type { Metadata } from 'next'
-import { DM_Sans } from 'next/font/google'
-import './globals.css'
-import { ClerkProvider } from '@clerk/nextjs'
-import { dark } from '@clerk/themes'
-import { ThemeProvider } from '@/providers/theme-provider'
-import ModalProvider from '@/providers/modal-provider'
-import { Toaster } from '@/components/ui/toaster'
-import { Toaster as SonnarToaster } from '@/components/ui/sonner'
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ModalProvider } from "@/components/providers/ModalProvider";
 
-const font = DM_Sans({ subsets: ['latin'] })
+import { DM_Sans } from "next/font/google";
+import { DM_Mono } from "next/font/google";
+import { cn } from "@/lib/utils";
+import type { Metadata } from "next";
+
+import "./globals.css";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: 'Zendo',
-  description: 'All in one Agency Solution',
-}
+  title: "Zendo",
+  description: "All in one Agency Solution",
+};
+
+const fontSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
+const fontMono = DM_Mono({
+  subsets: ["latin"],
+  variable: "--font-dm-mono",
+  weight: "400",
+});
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-    >
-      <body className={font.className}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body
+        className={cn(
+          "relative h-full font-sans antialiased min-h-screen",
+          fontSans.variable,
+          fontMono.variable
+        )}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <ModalProvider>
-            {children}
-            <Toaster />
-            <SonnarToaster position="bottom-left" />
-          </ModalProvider>
+          <ModalProvider>{children}</ModalProvider>
         </ThemeProvider>
+        <Toaster richColors />
       </body>
     </html>
-  )
+  );
 }

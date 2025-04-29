@@ -1,6 +1,12 @@
-import BlurPage from '@/components/global/blur-page'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
+import React from "react";
+import { redirect } from "next/navigation";
+import { Decimal } from "@prisma/client/runtime/library";
+import { format } from "date-fns";
+
+import { getSubAccountWithContacts } from "@/queries/contacts";
+
+import BlurPage from "@/components/common/BlurPage";
+import { constructMetadata, formatPrice } from "@/lib/utils";
 import {
   Table,
   TableBody,
@@ -8,102 +14,90 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { db } from '@/lib/db'
-import { Contact, SubAccount, Ticket } from '@prisma/client'
-import format from 'date-fns/format'
-import React from 'react'
-import CraeteContactButton from './_components/create-contact-btn'
+} from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import CreateContactButton from "./_components/CreateButton";
 
-type Props = {
-  params: { subaccountId: string }
+interface SubAccountContactPageProps {
+  params: {
+    subaccountId: string | undefined;
+  };
 }
 
-const ContactPage = async ({ params }: Props) => {
-  type SubAccountWithContacts = SubAccount & {
-    Contact: (Contact & { Ticket: Ticket[] })[]
-  }
+const SubAccountContactPage: React.FC<SubAccountContactPageProps> = async ({
+  params,
+}) => {
+  const { subaccountId } = params;
 
-  const contacts = (await db.subAccount.findUnique({
-    where: {
-      id: params.subaccountId,
-    },
+  if (!subaccountId) redirect("/subaccount/unauthorized");
 
-    include: {
-      Contact: {
-        include: {
-          Ticket: {
-            select: {
-              value: true,
-            },
-          },
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
-      },
-    },
-  })) as SubAccountWithContacts
+  const contacts = await getSubAccountWithContacts(subaccountId);
+  const allContacts = contacts?.contacts;
 
-  const allContacts = contacts.Contact
-
-  const formatTotal = (tickets: Ticket[]) => {
-    if (!tickets || !tickets.length) return '$0.00'
-    const amt = new Intl.NumberFormat(undefined, {
-      style: 'currency',
-      currency: 'USD',
-    })
+  const formatTotal = (tickets: { value: Decimal | null }[]) => {
+    if (!tickets || !tickets.length) return null;
 
     const laneAmt = tickets.reduce(
-      (sum, ticket) => sum + (Number(ticket?.value) || 0),
+      (sum, ticket) => sum + (Number(ticket.value) || 0),
       0
-    )
+    );
 
-    return amt.format(laneAmt)
-  }
+    return formatPrice(laneAmt);
+  };
+
   return (
     <BlurPage>
-      <h1 className="text-4xl p-4">Contacts</h1>
-      <CraeteContactButton subaccountId={params.subaccountId} />
+      <div className="flex items-center justify-between md:flex-row flex-col gap-2">
+        <h1 className="text-3xl mb-4 font-bold">Contacts</h1>
+        <CreateContactButton subAccountId={subaccountId} />
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Name</TableHead>
-            <TableHead className="w-[300px]">Email</TableHead>
-            <TableHead className="w-[200px]">Active</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Active</TableHead>
             <TableHead>Created Date</TableHead>
-            <TableHead className="text-right">Total Value</TableHead>
+            <TableHead>Total Value</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="font-medium truncate">
-          {allContacts.map((contact) => (
-            <TableRow key={contact.id}>
-              <TableCell>
-                <Avatar>
-                  <AvatarImage alt="@shadcn" />
-                  <AvatarFallback className="bg-primary text-white">
-                    {contact.name.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </TableCell>
-              <TableCell>{contact.email}</TableCell>
-              <TableCell>
-                {formatTotal(contact.Ticket) === '$0.00' ? (
-                  <Badge variant={'destructive'}>Inactive</Badge>
-                ) : (
-                  <Badge className="bg-emerald-700">Active</Badge>
-                )}
-              </TableCell>
-              <TableCell>{format(contact.createdAt, 'MM/dd/yyyy')}</TableCell>
-              <TableCell className="text-right">
-                {formatTotal(contact.Ticket)}
-              </TableCell>
-            </TableRow>
-          ))}
+          {!!allContacts?.length &&
+            allContacts.map((contact) => {
+              return (
+                <TableRow key={contact.id}>
+                  <TableCell>
+                    <Avatar>
+                      <AvatarImage alt={contact.name} />
+                      <AvatarFallback className="bg-primary text-white">
+                        {contact.name.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TableCell>
+                  <TableCell>{contact.email}</TableCell>
+                  <TableCell>
+                    {formatTotal(contact.tickets) === null ? (
+                      <Badge variant="destructive">Inactive</Badge>
+                    ) : (
+                      <Badge className="bg-emerald-700">Active</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {format(contact.createdAt, "MM/dd/yyyy")}
+                  </TableCell>
+                  <TableCell>{formatTotal(contact.tickets)}</TableCell>
+                </TableRow>
+              );
+            })}
         </TableBody>
       </Table>
     </BlurPage>
-  )
-}
+  );
+};
 
-export default ContactPage
+export default SubAccountContactPage;
+
+export const metadata = constructMetadata({
+  title: "Contacts - Zendo",
+});

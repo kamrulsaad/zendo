@@ -1,130 +1,135 @@
-import BlurPage from '@/components/global/blur-page'
-import CircleProgress from '@/components/global/circle-progress'
-import PipelineValue from '@/components/global/pipeline-value'
-import SubaccountFunnelChart from '@/components/global/subaccount-funnel-chart'
-import { Badge } from '@/components/ui/badge'
+import React from "react";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import Stripe from "stripe";
+import { format } from "date-fns";
+import { Clipboard, Contact2, DollarSign, ShoppingCart } from "lucide-react";
+
+import { getSubAccountDetails } from "@/queries/subaccount";
+import { getFunnels } from "@/queries/funnels";
+
+import { AreaChart } from "@/components/ui/area-chart";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-
+} from "@/components/ui/card";
+import { CircleProgress } from "@/components/ui/circle-progress";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { db } from '@/lib/db'
-import { stripe } from '@/lib/stripe'
-import { AreaChart, BadgeDelta } from '@tremor/react'
-import { ClipboardIcon, Contact2, DollarSign, ShoppingCart } from 'lucide-react'
-import Link from 'next/link'
-import React from 'react'
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { BadgeDelta } from "@/components/ui/badge-delta";
+import PipelineValue from "@/components/modules/pipelines/PipelineValue";
+import FunnelSubAccountChart from "@/components/modules/funnels/FunnelSubAccountChart";
+import BlurPage from "@/components/common/BlurPage";
 
-type Props = {
-  params: { subaccountId: string }
-  searchParams: {
-    code: string
-  }
+import { stripe } from "@/lib/stripe";
+import { constructMetadata } from "@/lib/utils";
+
+interface SubAccountPageIdProps {
+  params: {
+    subaccountId: string | undefined;
+  };
 }
 
-const SubaccountPageId = async ({ params, searchParams }: Props) => {
-  let currency = 'USD'
-  let sessions
-  let totalClosedSessions
-  let totalPendingSessions
-  let net = 0
-  let potentialIncome = 0
-  let closingRate = 0
+const SubAccountPageId: React.FC<SubAccountPageIdProps> = async ({
+  params,
+}) => {
+  const { subaccountId } = params;
 
-  const subaccountDetails = await db.subAccount.findUnique({
-    where: {
-      id: params.subaccountId,
-    },
-  })
+  if (!subaccountId) redirect("/subaccount/unauthorized");
 
-  const currentYear = new Date().getFullYear()
-  const startDate = new Date(`${currentYear}-01-01T00:00:00Z`).getTime() / 1000
-  const endDate = new Date(`${currentYear}-12-31T23:59:59Z`).getTime() / 1000
+  let currency: string = "USD";
+  let sessions: Stripe.Checkout.Session[] = [];
+  let totalClosedSessions;
+  let totalPendingSessions;
+  let net: number = 0;
+  let potentialIncome: number = 0;
+  let closingRate: number = 0;
 
-  if (!subaccountDetails) return
+  const currentDate = new Date().getFullYear();
+  const startDate = new Date(`${currentDate}-01-01T00:00:00Z`).getTime() / 1000;
+  const endDate = new Date(`${currentDate}-12-31T23:59:59Z`).getTime() / 1000;
 
-  if (subaccountDetails.connectAccountId) {
+  const subAccountDetails = await getSubAccountDetails(subaccountId);
+
+  if (!subAccountDetails) redirect("/subaccount/unauthorized");
+
+  if (subAccountDetails.connectAccountId) {
     const response = await stripe.accounts.retrieve({
-      stripeAccount: subaccountDetails.connectAccountId,
-    })
-    currency = response.default_currency?.toUpperCase() || 'USD'
+      stripeAccount: subAccountDetails.connectAccountId,
+    });
+
+    currency = response.default_currency?.toUpperCase() || "USD";
+
     const checkoutSessions = await stripe.checkout.sessions.list(
-      { created: { gte: startDate, lte: endDate }, limit: 100 },
       {
-        stripeAccount: subaccountDetails.connectAccountId,
+        created: {
+          gte: startDate,
+          lte: endDate,
+        },
+        limit: 100,
+      },
+      {
+        stripeAccount: subAccountDetails.connectAccountId,
       }
-    )
-    sessions = checkoutSessions.data.map((session) => ({
-      ...session,
-      created: new Date(session.created).toLocaleDateString(),
-      amount_total: session.amount_total ? session.amount_total / 100 : 0,
-    }))
+    );
+
+    sessions = checkoutSessions.data;
 
     totalClosedSessions = checkoutSessions.data
-      .filter((session) => session.status === 'complete')
+      .filter((session) => session.status === "complete")
       .map((session) => ({
         ...session,
-        created: new Date(session.created).toLocaleDateString(),
+        created: new Date().toLocaleDateString(),
         amount_total: session.amount_total ? session.amount_total / 100 : 0,
-      }))
+      }));
 
     totalPendingSessions = checkoutSessions.data
-      .filter(
-        (session) => session.status === 'open' || session.status === 'expired'
-      )
+      .filter((session) => session.status === "open")
       .map((session) => ({
         ...session,
-        created: new Date(session.created).toLocaleDateString(),
+        created: new Date().toLocaleDateString(),
         amount_total: session.amount_total ? session.amount_total / 100 : 0,
-      }))
+      }));
 
     net = +totalClosedSessions
       .reduce((total, session) => total + (session.amount_total || 0), 0)
-      .toFixed(2)
+      .toFixed(2);
 
     potentialIncome = +totalPendingSessions
       .reduce((total, session) => total + (session.amount_total || 0), 0)
-      .toFixed(2)
+      .toFixed(2);
 
-    closingRate = +(
-      (totalClosedSessions.length / checkoutSessions.data.length) *
-      100
-    ).toFixed(2)
+    closingRate +
+      (
+        (totalClosedSessions.length / checkoutSessions.data.length) *
+        100
+      ).toFixed(2);
   }
 
-  const funnels = await db.funnel.findMany({
-    where: {
-      subAccountId: params.subaccountId,
-    },
-    include: {
-      FunnelPages: true,
-    },
-  })
+  const funnels = await getFunnels(subaccountId);
 
   const funnelPerformanceMetrics = funnels.map((funnel) => ({
     ...funnel,
-    totalFunnelVisits: funnel.FunnelPages.reduce(
+    totalFunnelVisits: funnel.funnelPages.reduce(
       (total, page) => total + page.visits,
       0
     ),
-  }))
+  }));
 
   return (
     <BlurPage>
       <div className="relative h-full">
-        {!subaccountDetails.connectAccountId && (
+        {!subAccountDetails.connectAccountId && (
           <div className="absolute -top-10 -left-10 right-0 bottom-0 z-30 flex items-center justify-center backdrop-blur-md bg-background/50">
             <Card>
               <CardHeader>
@@ -133,10 +138,10 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                   You need to connect your stripe account to see metrics
                 </CardDescription>
                 <Link
-                  href={`/subaccount/${subaccountDetails.id}/launchpad`}
+                  href={`/subaccount/${subAccountDetails.id}/launchpad`}
                   className="p-2 w-fit bg-secondary text-white rounded-md flex items-center gap-2"
                 >
-                  <ClipboardIcon />
+                  <Clipboard />
                   Launch Pad
                 </Link>
               </CardHeader>
@@ -152,7 +157,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                   {net ? `${currency} ${net.toFixed(2)}` : `$0.00`}
                 </CardTitle>
                 <small className="text-xs text-muted-foreground">
-                  For the year {currentYear}
+                  For the year {format(new Date(), "yyyy")}
                 </small>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
@@ -169,7 +174,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                     : `$0.00`}
                 </CardTitle>
                 <small className="text-xs text-muted-foreground">
-                  For the year {currentYear}
+                  For the year {format(new Date(), "yyyy")}
                 </small>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
@@ -177,7 +182,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
               </CardContent>
               <Contact2 className="absolute right-4 top-4 text-muted-foreground" />
             </Card>
-            <PipelineValue subaccountId={params.subaccountId} />
+            <PipelineValue subAccountId={subaccountId} />
 
             <Card className="xl:w-fit">
               <CardHeader>
@@ -217,7 +222,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                 <CardDescription>Funnel Performance</CardDescription>
               </CardHeader>
               <CardContent className=" text-sm text-muted-foreground flex flex-col gap-12 justify-between ">
-                <SubaccountFunnelChart data={funnelPerformanceMetrics} />
+                <FunnelSubAccountChart data={funnelPerformanceMetrics} />
                 <div className="lg:w-[150px]">
                   Total page visits across all funnels. Hover over to get more
                   details on funnel page performance.
@@ -233,8 +238,8 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                 className="text-sm stroke-primary"
                 data={sessions || []}
                 index="created"
-                categories={['amount_total']}
-                colors={['primary']}
+                categories={["amount_total"]}
+                colors={["primary"]}
                 yAxisWidth={30}
                 showAnimation={true}
               />
@@ -268,7 +273,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                       ? totalClosedSessions.map((session) => (
                           <TableRow key={session.id}>
                             <TableCell>
-                              {session.customer_details?.email || '-'}
+                              {session.customer_details?.email || "-"}
                             </TableCell>
                             <TableCell>
                               <Badge className="bg-emerald-500 dark:text-black">
@@ -276,18 +281,21 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {new Date(session.created).toUTCString()}
+                              {format(
+                                new Date(session.created),
+                                "dd/MM/yyyy hh:mm"
+                              )}
                             </TableCell>
 
                             <TableCell className="text-right">
-                              <small>{currency}</small>{' '}
+                              <small>{currency}</small>{" "}
                               <span className="text-emerald-500">
                                 {session.amount_total}
                               </span>
                             </TableCell>
                           </TableRow>
                         ))
-                      : 'No Data'}
+                      : "No Data"}
                   </TableBody>
                 </Table>
               </CardHeader>
@@ -296,7 +304,11 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
         </div>
       </div>
     </BlurPage>
-  )
-}
+  );
+};
 
-export default SubaccountPageId
+export default SubAccountPageId;
+
+export const metadata = constructMetadata({
+  title: "Dashboard - Zendo",
+});

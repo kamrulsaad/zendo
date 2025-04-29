@@ -1,32 +1,36 @@
-import { db } from '@/lib/db'
-import { redirect } from 'next/navigation'
-import React from 'react'
+import React from "react";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: { subaccountId: string }
+import { createPipeline, getUserPipelines } from "@/queries/pipelines";
+import { constructMetadata } from "@/lib/utils";
+
+interface PipelinesPageProps {
+  params: {
+    subaccountId: string | undefined;
+  };
 }
 
-const Pipelines = async ({ params }: Props) => {
-  const pipelineExists = await db.pipeline.findFirst({
-    where: { subAccountId: params.subaccountId },
-  })
+const PipelinesPage: React.FC<PipelinesPageProps> = async ({ params }) => {
+  const { subaccountId } = params;
 
-  if (pipelineExists)
-    return redirect(
-      `/subaccount/${params.subaccountId}/pipelines/${pipelineExists.id}`
-    )
+  if (!subaccountId) redirect("/subaccount/unauthorized");
 
-  try {
-    const response = await db.pipeline.create({
-      data: { name: 'First Pipeline', subAccountId: params.subaccountId },
-    })
+  const pipelineExists = await getUserPipelines(subaccountId);
 
-    return redirect(
-      `/subaccount/${params.subaccountId}/pipelines/${response.id}`
-    )
-  } catch (error) {
-    console.log()
+  if (!!pipelineExists.length) {
+    redirect(`/subaccount/${subaccountId}/pipelines/${pipelineExists[0].id}`);
   }
-}
 
-export default Pipelines
+  const response = await createPipeline(subaccountId);
+
+  if (response) {
+    redirect(`/subaccount/${subaccountId}/pipelines/${response.id}`);
+  }
+
+  redirect("/error");
+};
+export default PipelinesPage;
+
+export const metadata = constructMetadata({
+  title: "Pipelines - Zendo",
+});

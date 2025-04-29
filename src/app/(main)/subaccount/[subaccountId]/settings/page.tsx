@@ -1,55 +1,59 @@
-import SubAccountDetails from '@/components/forms/subaccount-details'
-import UserDetails from '@/components/forms/user-details'
-import BlurPage from '@/components/global/blur-page'
-import { db } from '@/lib/db'
-import { currentUser } from '@clerk/nextjs'
-import React from 'react'
+import React from "react";
+import { currentUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: { subaccountId: string }
+import { getAuthUserDetails } from "@/queries/auth";
+import { getSubAccountDetails } from "@/queries/subaccount";
+import { getAgencyDetails } from "@/queries/agency";
+
+import BlurPage from "@/components/common/BlurPage";
+import SubAccountDetails from "@/components/forms/SubAccountDetails";
+import { Agency } from "@prisma/client";
+import { constructMetadata } from "@/lib/utils";
+
+interface SubAccountSettingsPageProps {
+  params: {
+    subaccountId: string | undefined;
+  };
 }
 
-const SubaccountSettingPage = async ({ params }: Props) => {
-  const authUser = await currentUser()
-  if (!authUser) return
-  const userDetails = await db.user.findUnique({
-    where: {
-      email: authUser.emailAddresses[0].emailAddress,
-    },
-  })
-  if (!userDetails) return
+const SubAccountSettingsPage: React.FC<SubAccountSettingsPageProps> = async ({
+  params,
+}) => {
+  const { subaccountId } = params;
+  const authUser = await currentUser();
 
-  const subAccount = await db.subAccount.findUnique({
-    where: { id: params.subaccountId },
-  })
-  if (!subAccount) return
+  if (!subaccountId) redirect("/subaccount/unauthorized");
+  if (!authUser) redirect("/agency/sign-in");
 
-  const agencyDetails = await db.agency.findUnique({
-    where: { id: subAccount.agencyId },
-    include: { SubAccount: true },
-  })
+  const userDetails = await getAuthUserDetails();
 
-  if (!agencyDetails) return
-  const subAccounts = agencyDetails.SubAccount
+  if (!userDetails) redirect("/subaccount/unauthorized");
+
+  const subAccount = await getSubAccountDetails(subaccountId);
+
+  if (!subAccount) redirect("/subaccount/unauthorized");
+
+  const agencyDetails = await getAgencyDetails(subAccount.agencyId);
 
   return (
     <BlurPage>
-      <div className="flex lg:!flex-row flex-col gap-4">
-        <SubAccountDetails
-          agencyDetails={agencyDetails}
-          details={subAccount}
-          userId={userDetails.id}
-          userName={userDetails.name}
-        />
-        <UserDetails
-          type="subaccount"
-          id={params.subaccountId}
-          subAccounts={subAccounts}
-          userData={userDetails}
-        />
+      <div className="flex justify-center items-center mt-4">
+        <div className="max-w-4xl w-full flex flex-col gap-8">
+          <SubAccountDetails
+            agencyDetails={agencyDetails as Agency}
+            details={subAccount}
+            userId={userDetails.id}
+            userName={userDetails.name}
+          />
+        </div>
       </div>
     </BlurPage>
-  )
-}
+  );
+};
 
-export default SubaccountSettingPage
+export default SubAccountSettingsPage;
+
+export const metadata = constructMetadata({
+  title: "Settings - Zendo",
+});

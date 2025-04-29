@@ -1,40 +1,51 @@
-import Unauthorized from '@/components/unauthorized'
-import { getAuthUserDetails, verifyAndAcceptInvitation } from '@/lib/queries'
-import { redirect } from 'next/navigation'
-import React from 'react'
+import React from "react";
+import { verifyInvintation } from "@/queries/invintations";
+import { redirect } from "next/navigation";
+import { getAuthUserDetails } from "@/queries/auth";
+import Unauthorized from "@/components/common/Unauthorized";
+import { constructMetadata } from "@/lib/utils";
 
-type Props = {
-  searchParams: { state: string; code: string }
+interface SubAccountPageProps {
+  searchParams: {
+    code: string | undefined;
+    state: string | undefined;
+  };
 }
 
-const SubAccountMainPage = async ({ searchParams }: Props) => {
-  const agencyId = await verifyAndAcceptInvitation()
+const SubAccountPage: React.FC<SubAccountPageProps> = async ({
+  searchParams,
+}) => {
+  const { code, state } = searchParams;
 
-  if (!agencyId) {
-    return <Unauthorized />
+  const agencyId = await verifyInvintation();
+
+  if (!agencyId) redirect(`/subaccount/unauthorized`);
+
+  const user = await getAuthUserDetails();
+  if (!user) redirect(`/agency/sign-in`);
+
+  if (state) {
+    const statePath = state.split("___")[0];
+    const stateSubAccountId = state.split("___")[1];
+
+    if (!stateSubAccountId) redirect(`/agency/unauthorized`);
+
+    redirect(`/subaccount/${stateSubAccountId}/${statePath}?code=${code}`);
   }
 
-  const user = await getAuthUserDetails()
-  if (!user) return
-
-  const getFirstSubaccountWithAccess = user.Permissions.find(
+  const firstSubAccountWithAccess = user.permissions.find(
     (permission) => permission.access === true
-  )
+  );
 
-  if (searchParams.state) {
-    const statePath = searchParams.state.split('___')[0]
-    const stateSubaccountId = searchParams.state.split('___')[1]
-    if (!stateSubaccountId) return <Unauthorized />
-    return redirect(
-      `/subaccount/${stateSubaccountId}/${statePath}?code=${searchParams.code}`
-    )
+  if (firstSubAccountWithAccess) {
+    redirect(`/subaccount/${firstSubAccountWithAccess.subAccountId}`);
   }
 
-  if (getFirstSubaccountWithAccess) {
-    return redirect(`/subaccount/${getFirstSubaccountWithAccess.subAccountId}`)
-  }
+  return <Unauthorized />;
+};
 
-  return <Unauthorized />
-}
+export default SubAccountPage;
 
-export default SubAccountMainPage
+export const metadata = constructMetadata({
+  title: "Subaccount - Zendo",
+});

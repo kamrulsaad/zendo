@@ -1,23 +1,34 @@
-import BlurPage from '@/components/global/blur-page'
-import MediaComponent from '@/components/media'
-import { getMedia } from '@/lib/queries'
-import React from 'react'
+import React from "react";
+import { redirect } from "next/navigation";
 
-type Props = {
-  params: { subaccountId: string }
+import { getMedia } from "@/queries/media";
+
+import BlurPage from "@/components/common/BlurPage";
+import Media from "@/components/modules/media/Media";
+import { constructMetadata } from "@/lib/utils";
+
+interface MediaPageProps {
+  params: {
+    subaccountId: string | undefined;
+  };
 }
 
-const MediaPage = async ({ params }: Props) => {
-  const data = await getMedia(params.subaccountId)
+const MediaPage: React.FC<MediaPageProps> = async ({ params }) => {
+  const { subaccountId } = params;
+
+  if (!subaccountId) redirect(`/subaccount/unauthorized`);
+
+  const media = await getMedia(subaccountId);
 
   return (
     <BlurPage>
-      <MediaComponent
-        data={data}
-        subaccountId={params.subaccountId}
-      />
+      <Media data={media} subAccountId={subaccountId} />
     </BlurPage>
-  )
-}
+  );
+};
 
-export default MediaPage
+export default MediaPage;
+
+export const metadata = constructMetadata({
+  title: "Media - Zendo",
+});

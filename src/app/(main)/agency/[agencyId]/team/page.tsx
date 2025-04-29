@@ -1,55 +1,54 @@
-import { db } from '@/lib/db'
-import React from 'react'
-import DataTable from './data-table'
-import { Plus } from 'lucide-react'
-import { currentUser } from '@clerk/nextjs'
-import { columns } from './columns'
-import SendInvitation from '@/components/forms/send-invitation'
+import React from "react";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs";
+import { Plus } from "lucide-react";
 
-type Props = {
-  params: { agencyId: string }
+import { getAgencyDetails } from "@/queries/agency";
+import { getAuthUserGroup } from "@/queries/auth";
+
+import TeamsDataTable from "./data-table";
+import { teamTableColumns } from "./columns";
+import SendInvitation from "@/components/forms/SendInvitation";
+import { constructMetadata } from "@/lib/utils";
+
+interface TeamPageProps {
+  params: {
+    agencyId: string | undefined;
+  };
 }
 
-const TeamPage = async ({ params }: Props) => {
-  const authUser = await currentUser()
-  const teamMembers = await db.user.findMany({
-    where: {
-      Agency: {
-        id: params.agencyId,
-      },
-    },
-    include: {
-      Agency: { include: { SubAccount: true } },
-      Permissions: { include: { SubAccount: true } },
-    },
-  })
+const TeamPage: React.FC<TeamPageProps> = async ({ params }) => {
+  const { agencyId } = params;
+  const authUser = await currentUser();
 
-  if (!authUser) return null
-  const agencyDetails = await db.agency.findUnique({
-    where: {
-      id: params.agencyId,
-    },
-    include: {
-      SubAccount: true,
-    },
-  })
+  if (!authUser) redirect("/agency/sign-in");
+  if (!agencyId) redirect("/agency/unauthorized");
 
-  if (!agencyDetails) return
+  const teamMembers = await getAuthUserGroup(agencyId);
+  if (!teamMembers) redirect("/agency/sign-in");
+
+  const agencyDetails = await getAgencyDetails(agencyId);
+  if (!agencyDetails) redirect("/agency/unauthorized");
 
   return (
-    <DataTable
+    <TeamsDataTable
       actionButtonText={
         <>
-          <Plus size={15} />
+          <Plus className="w-4 h-4" />
           Add
         </>
       }
-      modalChildren={<SendInvitation agencyId={agencyDetails.id} />}
+      modalChildren={<SendInvitation agencyId={agencyId} />}
       filterValue="name"
-      columns={columns}
+      // @ts-expect-error not sure why this error occurs but table is working fine
+      columns={teamTableColumns}
       data={teamMembers}
-    ></DataTable>
-  )
-}
+    />
+  );
+};
 
-export default TeamPage
+export default TeamPage;
+
+export const metadata = constructMetadata({
+  title: "Team - Zendo",
+});

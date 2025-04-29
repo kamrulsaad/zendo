@@ -14,17 +14,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-// import { PRICING } from "@/config/pricing";
+import { PRICING } from "@/config/pricing";
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
-import { pricingCards } from "@/lib/constants";
 
 const HoverPriceCard: React.FC = ({}) => {
   let [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3")}>
-      {pricingCards.map((price, idx) => (
+      {PRICING.map((price, idx) => (
         <div
           key={idx}
           className="relative group block p-2 h-full"
@@ -50,7 +49,7 @@ const HoverPriceCard: React.FC = ({}) => {
           </AnimatePresence>
           <Card
             key={price.title}
-            className={cn("w-[300px] flex flex-col justify-between z-30 rounded-2xl", {
+            className={cn("w-[300px] flex flex-col justify-between z-30", {
               "border border-primary": price.title === "Unlimited Saas",
             })}
           >

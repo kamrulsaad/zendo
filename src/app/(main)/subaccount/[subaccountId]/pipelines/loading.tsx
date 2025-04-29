@@ -1,12 +1,12 @@
-import LoadingPage from '@/components/global/loading-page'
-import React from 'react'
+import React from "react";
+import Loading from "@/components/ui/loading";
 
-const Loading = () => {
+const PipelinesLoading: React.FC = () => {
   return (
-    <div className="-mt-8 h-screen">
-      <LoadingPage />
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <Loading />
     </div>
-  )
-}
+  );
+};
 
-export default Loading
+export default PipelinesLoading;

@@ -1,51 +1,62 @@
-import { db } from '@/lib/db'
-import EditorProvider from '@/providers/editor/editor-provider'
-import { redirect } from 'next/navigation'
-import React from 'react'
-import FunnelEditorNavigation from './_components/funnel-editor-navigation'
-import FunnelEditorSidebar from './_components/funnel-editor-sidebar'
-import FunnelEditor from './_components/funnel-editor'
+import React from "react";
+import { redirect } from "next/navigation";
 
-type Props = {
+import { getFunnelPageDetails } from "@/queries/funnels";
+
+import EditorProvider from "@/components/providers/EditorProvider";
+import FunnelEditorNavigation from "@/components/modules/editor/FunnelEditorNavigation";
+import FunnelEditorSidebar from "@/components/modules/editor/FunnelEditorSidebar";
+import FunnelEditor from "@/components/modules/editor/FunnelEditor";
+import { constructMetadata } from "@/lib/utils";
+
+interface FunnelIdEditorPageProps {
   params: {
-    subaccountId: string
-    funnelId: string
-    funnelPageId: string
-  }
+    funnelId: string | undefined;
+    funnelPageId: string | undefined;
+    subaccountId: string | undefined;
+  };
 }
 
-const Page = async ({ params }: Props) => {
-  const funnelPageDetails = await db.funnelPage.findFirst({
-    where: {
-      id: params.funnelPageId,
-    },
-  })
+const FunnelIdEditorPage: React.FC<FunnelIdEditorPageProps> = async ({
+  params,
+}) => {
+  const { funnelId, funnelPageId, subaccountId } = params;
+
+  if (!subaccountId) redirect("/subaccount/unauthorized");
+  if (!funnelId || !funnelPageId) {
+    redirect(`/subaccount/${subaccountId}/funnels`);
+  }
+
+  const funnelPageDetails = await getFunnelPageDetails(funnelPageId);
+
   if (!funnelPageDetails) {
-    return redirect(
-      `/subaccount/${params.subaccountId}/funnels/${params.funnelId}`
-    )
+    redirect(`/subaccount/${subaccountId}/funnels/${funnelId}`);
   }
 
   return (
     <div className="fixed top-0 bottom-0 left-0 right-0 z-[20] bg-background overflow-hidden">
       <EditorProvider
-        subaccountId={params.subaccountId}
-        funnelId={params.funnelId}
+        subAccountId={subaccountId}
+        funnelId={funnelId}
         pageDetails={funnelPageDetails}
       >
         <FunnelEditorNavigation
-          funnelId={params.funnelId}
+          funnelId={funnelId}
           funnelPageDetails={funnelPageDetails}
-          subaccountId={params.subaccountId}
+          subAccountId={subaccountId}
         />
-        <div className="h-full flex justify-center">
-          <FunnelEditor funnelPageId={params.funnelPageId} />
-        </div>
-
-        <FunnelEditorSidebar subaccountId={params.subaccountId} />
+        <FunnelEditor
+          funnelPageId={funnelPageId}
+          funnelPageDetails={funnelPageDetails}
+        />
+        <FunnelEditorSidebar subAccountId={subaccountId} />
       </EditorProvider>
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default FunnelIdEditorPage;
+
+export const metadata = constructMetadata({
+  title: "Editor - Zendo",
+});

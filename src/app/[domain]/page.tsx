@@ -1,42 +1,46 @@
-import { db } from '@/lib/db'
-import { getDomainContent } from '@/lib/queries'
-import EditorProvider from '@/providers/editor/editor-provider'
-import { notFound } from 'next/navigation'
-import React from 'react'
-import FunnelEditorNavigation from '../(main)/subaccount/[subaccountId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor-navigation'
-import FunnelEditor from '../(main)/subaccount/[subaccountId]/funnels/[funnelId]/editor/[funnelPageId]/_components/funnel-editor'
+import React from "react";
+import { notFound, redirect } from "next/navigation";
 
-const Page = async ({ params }: { params: { domain: string } }) => {
-  const domainData = await getDomainContent(params.domain.slice(0, -1))
-  if (!domainData) return notFound()
+import { getDomainContent } from "@/queries/domain";
+import { updateFunnelPageVisits } from "@/queries/funnels";
 
-  const pageData = domainData.FunnelPages.find((page) => !page.pathName)
+import EditorProvider from "@/components/providers/EditorProvider";
+import FunnelEditor from "@/components/modules/editor/FunnelEditor";
 
-  if (!pageData) return notFound()
+interface DomainPageProps {
+  params: {
+    domain: string | undefined;
+  };
+}
 
-  await db.funnelPage.update({
-    where: {
-      id: pageData.id,
-    },
-    data: {
-      visits: {
-        increment: 1,
-      },
-    },
-  })
+const DomainPage: React.FC<DomainPageProps> = async ({ params }) => {
+  const { domain } = params;
+
+  if (!domain) notFound();
+
+  const domainData = await getDomainContent(domain.slice(0, -1));
+
+  if (!domainData) notFound();
+
+  const pageData = domainData.funnelPages.find((page) => !page.pathName);
+
+  if (!pageData) notFound();
+
+  await updateFunnelPageVisits(pageData.id);
 
   return (
     <EditorProvider
-      subaccountId={domainData.subAccountId}
+      subAccountId={domainData.subAccountId}
       pageDetails={pageData}
       funnelId={domainData.id}
     >
       <FunnelEditor
         funnelPageId={pageData.id}
-        liveMode={true}
+        funnelPageDetails={pageData}
+        liveMode
       />
     </EditorProvider>
-  )
-}
+  );
+};
 
-export default Page
+export default DomainPage;

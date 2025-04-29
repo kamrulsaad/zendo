@@ -1,70 +1,81 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { db } from '@/lib/db'
+import React from "react";
+import { redirect } from "next/navigation";
+
+import { getPipelineDetails, getUserPipelines } from "@/queries/pipelines";
 import {
-  getLanesWithTicketAndTags,
-  getPipelineDetails,
+  getLanesWithTicketsAndTags,
   updateLanesOrder,
   updateTicketsOrder,
-} from '@/lib/queries'
-import { LaneDetail } from '@/lib/types'
-import { redirect } from 'next/navigation'
-import React from 'react'
-import PipelineInfoBar from '../_components/pipeline-infobar'
-import PipelineSettings from '../_components/pipeline-settings'
-import PipelineView from '../_components/pipeline-view'
+} from "@/queries/lanes";
 
-type Props = {
-  params: { subaccountId: string; pipelineId: string }
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PipelineInfoBar from "@/components/modules/pipelines/PipelineInfoBar";
+import PipelineSettings from "@/components/forms/PipelineSettings";
+import PipelineView from "@/components/modules/pipelines/PipelineView";
+import { constructMetadata } from "@/lib/utils";
+
+interface PipelineIdPageProps {
+  params: {
+    subaccountId: string | undefined;
+    pipelineId: string | undefined;
+  };
 }
 
-const PipelinePage = async ({ params }: Props) => {
-  const pipelineDetails = await getPipelineDetails(params.pipelineId)
-  if (!pipelineDetails)
-    return redirect(`/subaccount/${params.subaccountId}/pipelines`)
+const PipelineIdPage: React.FC<PipelineIdPageProps> = async ({ params }) => {
+  const { subaccountId, pipelineId } = params;
 
-  const pipelines = await db.pipeline.findMany({
-    where: { subAccountId: params.subaccountId },
-  })
+  if (!subaccountId) redirect(`/subaccount/unauthorized`);
+  if (!pipelineId) redirect(`/subaccount/${subaccountId}/pipelines`);
 
-  const lanes = (await getLanesWithTicketAndTags(
-    params.pipelineId
-  )) as LaneDetail[]
+  const pipelineDetails = await getPipelineDetails(pipelineId);
+
+  if (!pipelineDetails) {
+    redirect(`/subaccount/${subaccountId}/pipelines`);
+  }
+
+  const allPipelines = await getUserPipelines(subaccountId);
+  const lanes = await getLanesWithTicketsAndTags(pipelineId);
 
   return (
-    <Tabs
-      defaultValue="view"
-      className="w-full"
-    >
-      <TabsList className="bg-transparent border-b-2 h-16 w-full justify-between mb-4">
+    <Tabs defaultValue="view" className="w-full">
+      <TabsList className="bg-transparent border-b border-border rounded-none sm:flex-row flex-col gap-4 sm:gap-0 sm:h-16 h-auto w-full sm:justify-between mb-4 pb-4 sm:pb-0">
         <PipelineInfoBar
-          pipelineId={params.pipelineId}
-          subAccountId={params.subaccountId}
-          pipelines={pipelines}
+          pipelineId={pipelineId}
+          subAccountId={subaccountId}
+          pipelines={allPipelines}
         />
-        <div>
-          <TabsTrigger value="view">Pipeline View</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+        <div className="flex items-center w-full sm:w-auto">
+          <TabsTrigger value="view" className="sm:w-auto w-full">
+            Pipeline View
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="sm:w-auto w-full">
+            Settings
+          </TabsTrigger>
         </div>
       </TabsList>
       <TabsContent value="view">
         <PipelineView
           lanes={lanes}
           pipelineDetails={pipelineDetails}
-          pipelineId={params.pipelineId}
-          subaccountId={params.subaccountId}
+          pipelineId={pipelineId}
+          subAccountId={subaccountId}
           updateLanesOrder={updateLanesOrder}
           updateTicketsOrder={updateTicketsOrder}
         />
       </TabsContent>
       <TabsContent value="settings">
         <PipelineSettings
-          pipelineId={params.pipelineId}
-          pipelines={pipelines}
-          subaccountId={params.subaccountId}
+          pipelineId={pipelineId}
+          pipelines={allPipelines}
+          subaccountId={subaccountId}
         />
       </TabsContent>
     </Tabs>
-  )
-}
+  );
+};
 
-export default PipelinePage
+export default PipelineIdPage;
+
+export const metadata = constructMetadata({
+  title: "Pipeline - Zendo",
+});
