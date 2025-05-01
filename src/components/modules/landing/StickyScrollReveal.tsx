@@ -31,7 +31,7 @@ const content = [
     content: (
       <div className="h-full w-full rounded-md flex items-center justify-center text-white">
         <Image
-          src="https://utfs.io/f/30845fe9-f07d-49a4-8072-112bb8152111-euyk0.png"
+          src="https://utfs.io/f/W6d10L2y3amd8OONx03LQkvJwVTh2nqIPHMZW8sUDbOiYAEe"
           fill
           className="h-full w-full object-fit rounded-md border"
           alt="Feature"
