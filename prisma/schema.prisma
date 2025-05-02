@@ -361,24 +361,8 @@ model Funnel {
 
   subAccount  SubAccount   @relation(fields: [subAccountId], references: [id], onDelete: Cascade)
   funnelPages FunnelPage[]
-  className   ClassName[]
 
   @@index([subAccountId])
-}
-
-model ClassName {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  name       String
-  color      String
-  funnelId   String
-  customData String? @db.LongText
-
-  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-
-  @@index([funnelId])
 }
 
 model FunnelPage {
